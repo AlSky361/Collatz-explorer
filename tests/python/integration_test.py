@@ -148,6 +148,22 @@ class IntegrationTests(unittest.TestCase):
                 self.assertEqual(result.returncode, 1, result.stderr)
                 self.assertFalse(output.exists())
 
+    def test_configuration_requires_one_complete_json_document(self):
+        document = json.dumps(dict(n_max=1, bases=[2]))
+        for index, suffix in enumerate(["", "\n \t", "\nINVALID", "\n{}"]):
+            with self.subTest(suffix=suffix):
+                path = self.root / f"document{index}.json"
+                path.write_text(document + suffix, encoding="utf-8")
+                output = self.root / f"document{index}"
+                result = subprocess.run([str(BINARY), str(path), str(output)],
+                                        capture_output=True, text=True, timeout=60)
+                if suffix.strip():
+                    self.assertEqual(result.returncode, 1, result.stderr)
+                    self.assertFalse(output.exists())
+                else:
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    self.assertTrue(output.exists())
+
     def test_overflow_reports_error_instead_of_aborting(self):
         result, _, _ = self.run_app(n_max=1, coral_n_list=[6148914691236517205])
         self.assertEqual(result.returncode, 1, result.stderr)

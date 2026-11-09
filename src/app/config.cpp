@@ -103,8 +103,7 @@ uint64_t estimate_working_bytes(const Config& config) {
 Config load_config(const std::string& path) {
     std::ifstream input(path);
     if (!input) throw std::runtime_error("Cannot open configuration: " + path);
-    Json j;
-    input >> j;
+    const Json j = Json::parse(input);
     if (!j.is_object()) throw std::invalid_argument("Configuration must be a JSON object");
     const std::set<std::string> known{
         "n_max",      "bases",         "coral_n_count", "coral_n_list",     "summary_bins",

@@ -25,6 +25,22 @@ if(COLLATZ_LTO AND NOT COLLATZ_SANITIZERS AND NOT COLLATZ_TSAN)
 endif()
 
 find_package(Threads REQUIRED)
+include(CheckCXXSourceCompiles)
+set(CMAKE_REQUIRED_LIBRARIES Threads::Threads)
+check_cxx_source_compiles("
+    #include <stop_token>
+    #include <thread>
+    int main() {
+        std::jthread worker([](std::stop_token stop) { (void)stop.stop_requested(); });
+        worker.request_stop();
+    }
+" COLLATZ_HAS_JTHREAD)
+unset(CMAKE_REQUIRED_LIBRARIES)
+if(NOT COLLATZ_HAS_JTHREAD)
+    message(FATAL_ERROR
+        "C++20 std::jthread and std::stop_token are required. "
+        "On macOS, use Xcode/Command Line Tools 26 or newer.")
+endif()
 include(cmake/VerifyJson.cmake)
 add_library(collatz_options INTERFACE)
 if(MSVC)

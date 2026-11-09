@@ -35,7 +35,7 @@ jobs:
             cmake-args: -DCMAKE_CXX_COMPILER=clang++
             binary: build/ci/collatz_run
           - name: macos-apple-clang
-            os: macos-15
+            os: macos-26
             cmake-args: -DCMAKE_CXX_COMPILER=clang++
             binary: build/ci/collatz_run
           - name: windows-msvc
@@ -93,7 +93,7 @@ jobs:
             os: ubuntu-24.04
             cmake-args: -DCMAKE_CXX_COMPILER=clang++ -DCOLLATZ_SANITIZERS=ON
           - name: macos-apple-clang-tsan
-            os: macos-15
+            os: macos-26
             cmake-args: -DCMAKE_CXX_COMPILER=clang++ -DCOLLATZ_TSAN=ON
     defaults:
       run:

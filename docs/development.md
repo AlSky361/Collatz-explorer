@@ -9,6 +9,8 @@
 
 Требуются CMake 3.20+ и C++20. nlohmann/json 3.12.0 включён в `third_party/`;
 CMake проверяет SHA-256. [Сведения о зависимости](../third_party/README.md).
+На macOS нужны Xcode / Command Line Tools 26+: CMake отдельно проверяет
+поддержку `std::jthread` и `std::stop_token` выбранной стандартной библиотекой.
 
 | Скрипт из корня проекта | Действие |
 |---|---|
@@ -73,7 +75,7 @@ ctest --test-dir build/tsan --output-on-failure
 ## CI и фактическое состояние
 
 [Workflow](../.github/workflows/ci.yml) настроен для Ubuntu 24.04 (GCC/Clang),
-macOS 15 (Apple Clang), Windows 2022 (MSVC), ASan/UBSan на Linux и TSan на macOS.
+macOS 26 (Apple Clang), Windows 2022 (MSVC), ASan/UBSan на Linux и TSan на macOS.
 Release-задания запускают графики и экспорт пяти PNG с Python 3.14.
 Права workflow — `contents: read`; шагов публикации нет.
 `.gitattributes` сохраняет байты vendored JSON без преобразования переводов строк.
@@ -84,18 +86,18 @@ Release-задания запускают графики и экспорт пя�
 |---|---|---|
 | macOS arm64, Apple Clang 21, Release с LTO, Python 3.14.5 | 12/12, включая графики | 10 ноября |
 | macOS arm64, Apple Clang 21, ASan/UBSan | 11/11 | 10 ноября |
-| macOS arm64, GCC 16.2, Release с LTO | 11/11 | 8 ноября |
-| macOS arm64, TSan | 11/11 | 8 ноября |
+| macOS arm64, GCC 16.2, Release с LTO | 11/11 | 10 ноября |
+| macOS arm64, TSan | 11/11 | 10 ноября |
 
 10 ноября Release собран из чистой копии 119 файлов для публикации;
 ASan/UBSan проверен повторно в рабочем каталоге. Быстрый пример из README
 проверен в чистой копии: созданы паспорт, данные и пять PNG.
 Версии установленных Python-зависимостей совпадают с `requirements.txt`.
 Ранее проверен и запуск на миллионе стартов.
-Linux arm64 Debian 12 с GCC 12.2 и Clang 14 проверялся ранее, до последующих
-оптимизаций и наборов результатов. Текущая версия на Linux и Windows локально
-не проверялась; MSVC и PowerShell также не запускались. Конфигурация CI
-не подтверждает прохождение GitHub Actions: результат проверяется после размещения.
+В первом запуске GitHub Actions Linux Clang прошёл 12/12, ASan/UBSan — 11/11.
+GCC и MSVC остановились на ошибках переносимости, macOS — на отсутствии
+`std::jthread` в выбранной библиотеке. Причины исправлены; повторный запуск
+Actions для этих правок ещё не подтверждён. MSVC и PowerShell локально не запускались.
 
 После выделения модулей экспорта, загрузки данных и элементов управления
 Release и ASan/UBSan проверены повторно. CSV, сводка и траектории побайтово

@@ -71,7 +71,7 @@ bool rejects(Action action) {
 bool check_invalid() {
     const auto layout = collatz::make_digit_layout({2, 10});
     std::vector<uint64_t> totals(layout.total_size);
-    for (const auto [odd, doublings] : std::vector<std::pair<uint64_t, unsigned>>{
+    for (const auto& [odd, doublings] : std::vector<std::pair<uint64_t, unsigned>>{
              {0, 0}, {2, 1}, {1, 64}, {3, 63}, {UINT64_MAX, 1}})
         if (!rejects<std::invalid_argument>(
                 [&] { collatz::detail::record_doubling_prefixes(odd, doublings, layout, totals); }))

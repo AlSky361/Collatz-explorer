@@ -7,6 +7,7 @@
 #include <exception>
 #include <limits>
 #include <stdexcept>
+#include <string>
 #include <thread>
 
 #include "internal/digit_counter.hpp"

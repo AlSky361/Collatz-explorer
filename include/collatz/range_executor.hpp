@@ -4,6 +4,7 @@
 #include <exception>
 #include <memory>
 #include <mutex>
+#include <stop_token>
 #include <thread>
 
 #include "collatz/collatz_core.hpp"
