@@ -72,7 +72,7 @@ ChainMetrics compute_direct(uint64_t start, const DigitLayout& layout,
                             std::span<StepCount> digits) {
     ChainMetrics result;
     result.n = start;
-    std::fill(digits.begin(), digits.end(), 0);
+    std::fill(digits.begin(), digits.end(), StepCount{0});
     uint64_t value = start;
     while (true) {
         result.max_value = std::max(result.max_value, value);
@@ -99,7 +99,7 @@ ChainMetrics compute_mutable(uint64_t start, const DigitLayout& layout, std::spa
     }
     if (value == 1) {
         result.max_value = 1;
-        std::fill(digits.begin(), digits.end(), 0);
+        std::fill(digits.begin(), digits.end(), StepCount{0});
         record_digits(1, layout, digits);
     }
     result.n = start;
@@ -131,7 +131,7 @@ ChainMetrics compute_readonly(uint64_t start, const DigitLayout& layout,
     ChainMetrics result;
     if (memo.try_get_into(start, result, digits)) return result;
     result.n = start;
-    std::fill(digits.begin(), digits.end(), 0);
+    std::fill(digits.begin(), digits.end(), StepCount{0});
     scratch.tail_digits.resize(layout.total_size);
     uint64_t value = start;
     while (true) {
@@ -321,7 +321,7 @@ bool ChainMemo::read_entry(uint64_t value, ChainMetrics& out, std::span<StepCoun
     out.odd_steps = value == 1 ? 0 : odd_steps_[idx];
     out.even_steps = static_cast<StepCount>(out.length - out.odd_steps);
     out.max_value = value == 1 ? 1 : max_value_[idx];
-    std::fill(digits.begin(), digits.end(), 0);
+    std::fill(digits.begin(), digits.end(), StepCount{0});
     if (value != 1) {
         const size_t offset = idx * stored_indices_.size();
         if (layout_.standard_bases) {
