@@ -1,0 +1,120 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHONUTF8: "1"
+  PYTHONIOENCODING: utf-8
+  MPLBACKEND: Agg
+
+jobs:
+  build-test:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux-gcc
+            os: ubuntu-24.04
+            cmake-args: -DCMAKE_CXX_COMPILER=g++
+            binary: build/ci/collatz_run
+          - name: linux-clang
+            os: ubuntu-24.04
+            cmake-args: -DCMAKE_CXX_COMPILER=clang++
+            binary: build/ci/collatz_run
+          - name: macos-apple-clang
+            os: macos-15
+            cmake-args: -DCMAKE_CXX_COMPILER=clang++
+            binary: build/ci/collatz_run
+          - name: windows-msvc
+            os: windows-2022
+            cmake-args: '-G "Visual Studio 17 2022" -A x64'
+            binary: build/ci/Release/collatz_run.exe
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: requirements.txt
+      - name: Install visualization dependencies
+        run: python -m pip install --no-user -r requirements.txt
+      - name: Configure
+        run: >-
+          cmake -S . -B build/ci
+          -DCMAKE_BUILD_TYPE=Release
+          -DBUILD_TESTING=ON
+          -DCOLLATZ_VISUAL_TESTS=ON
+          -DCOLLATZ_WARNINGS_AS_ERRORS=ON
+          "-DPython3_EXECUTABLE=$(python -c 'import sys; print(sys.executable)')"
+          ${{ matrix.cmake-args }}
+      - name: Build
+        run: cmake --build build/ci --config Release --parallel 4
+      - name: C++, integration and visualization tests
+        run: ctest --test-dir build/ci -C Release --output-on-failure --timeout 300
+      - name: Generate demo data and PNG gallery
+        run: |
+          "${{ matrix.binary }}" examples/quickstart.json build/ci-demo
+          python python/visuals/demo.py --input-dir build/ci-demo --save-dir build/ci-demo/figures --no-show
+          for name in chain_lengths odd_even_steps max_values benford_digits coral_trajectories; do
+            test -s "build/ci-demo/figures/$name.png"
+          done
+      - name: Check Windows build wrapper
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./build.ps1 -Mode test
+
+  sanitizers:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux-clang-asan-ubsan
+            os: ubuntu-24.04
+            cmake-args: -DCMAKE_CXX_COMPILER=clang++ -DCOLLATZ_SANITIZERS=ON
+          - name: macos-apple-clang-tsan
+            os: macos-15
+            cmake-args: -DCMAKE_CXX_COMPILER=clang++ -DCOLLATZ_TSAN=ON
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+      - name: Configure
+        run: >-
+          cmake -S . -B build/sanitizers
+          -DCMAKE_BUILD_TYPE=Debug
+          -DBUILD_TESTING=ON
+          -DCOLLATZ_VISUAL_TESTS=OFF
+          -DCOLLATZ_WARNINGS_AS_ERRORS=ON
+          "-DPython3_EXECUTABLE=$(python -c 'import sys; print(sys.executable)')"
+          ${{ matrix.cmake-args }}
+      - name: Build
+        run: cmake --build build/sanitizers --parallel 4
+      - name: Test under sanitizers
+        run: ctest --test-dir build/sanitizers --output-on-failure --timeout 300

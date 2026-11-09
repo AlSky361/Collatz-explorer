@@ -1,0 +1,13 @@
+# Verify the pinned, vendored dependency. No network or system package lookup.
+file(STRINGS "${PROJECT_SOURCE_DIR}/third_party/nlohmann.SHA256SUMS" json_hashes)
+foreach(entry IN LISTS json_hashes)
+    if(NOT entry MATCHES "^([0-9a-f]+)  (nlohmann/.+)$")
+        message(FATAL_ERROR "Malformed nlohmann/json checksum manifest")
+    endif()
+    set(expected "${CMAKE_MATCH_1}")
+    set(header "${PROJECT_SOURCE_DIR}/third_party/${CMAKE_MATCH_2}")
+    file(SHA256 "${header}" actual)
+    if(NOT actual STREQUAL expected)
+        message(FATAL_ERROR "nlohmann/json checksum mismatch: ${header}")
+    endif()
+endforeach()

@@ -1,0 +1,12 @@
+{
+    "n_max": 10000,
+    "bases": [2, 8, 10, 16],
+    "batch_size": 1000,
+    "memo_capacity": 10000,
+    "threads": 2,
+    "memory_budget_mb": 256,
+    "write_csv": false,
+    "summary_bins": 100,
+    "coral_n_count": 100,
+    "coral_n_list": [27, 97, 703, 871]
+}

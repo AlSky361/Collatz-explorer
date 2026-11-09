@@ -1,0 +1,4 @@
+* text=auto eol=lf
+*.png binary
+# These exact bytes are authenticated by the vendored SHA-256 manifest.
+third_party/nlohmann/** -text
